@@ -79,13 +79,16 @@ def policy_improvement(q, pi):
     return pi, stable
 
 def policy_evaluation(q_curr, pi, gamma, threshold, max_iter=None):
-    # print(q_curr)
     env.reset()
     q_new = [[0 for _ in range(n_actions)] for _ in range(n_states)]
     errors = []
     delta = 1000 # anything > threshold, just for start
     num_iter = 0 # count to 5 then stop for GPI
-    while (max_iter is None and delta > threshold) or (max_iter is not None and num_iter < max_iter):
+    while True:
+        if max_iter is not None and num_iter >= max_iter:
+            break
+        if delta <= threshold:
+            break
         num_iter += 1
         error, delta = 0, 0
         for s in range(n_states):
@@ -103,7 +106,8 @@ def policy_evaluation(q_curr, pi, gamma, threshold, max_iter=None):
                 q_new[s][a] = val
                 error += abs(q_new[s][a] - q_curr[s][a])
                 delta = max(delta, abs(q_new[s][a] - q_curr[s][a]))
-        q_curr, q_new = copy.deepcopy(q_new), [[0 for _ in range(n_actions)] for _ in range(n_states)]
+        q_curr = q_new
+        q_new = [[0 for _ in range(n_actions)] for _ in range(n_states)]
         errors.append(error)
     return pi, q_curr, errors, delta
 
@@ -158,28 +162,28 @@ def value_iteration(init_value, gamma, threshold):
 fig, axs = plt.subplots(3, 7)
 tot_iter_table = np.zeros((3, 7))
 
-# equiprobable policy
-pi_random = [[(a, 1/n_actions) for a in range(n_actions)] for s in range(n_states)]
-
 # optimal policy, manually defined
 pi_opt = [1, 2, 4, 1, 2, 3, 2, 2, 3]
 
 gamma, threshold = 0.99, 0.00001
 
 for i, init_value in enumerate([-100, -10, -5, 0, 5, 10, 100]):
-    v_opt, errors = bellman_v(init_value, pi_opt, 0.99, 0.000001)
-    axs[0][i].set_title(f'$V_0$ = {init_value}')
+    axs[0][i].set_title(f'$Q_0$ = {init_value}')
 
     pi, tot_iter, be = value_iteration(init_value, gamma, threshold)
     tot_iter_table[0, i] = tot_iter
     assert np.allclose(pi, pi_opt)
     axs[0][i].plot(be)
 
+    # equiprobable policy
+    pi_random = [[(a, 1/n_actions) for a in range(n_actions)] for s in range(n_states)]
     pi, tot_iter, be = policy_iteration(init_value, pi_random, gamma, threshold)
     tot_iter_table[1, i] = tot_iter
     assert np.allclose(pi, pi_opt)
     axs[1][i].plot(be)
 
+    # equiprobable policy
+    pi_random = [[(a, 1/n_actions) for a in range(n_actions)] for s in range(n_states)]
     pi, tot_iter, be = generalized_policy_iteration(init_value, pi_random, gamma, threshold)
     tot_iter_table[2, i] = tot_iter
     assert np.allclose(pi, pi_opt)
