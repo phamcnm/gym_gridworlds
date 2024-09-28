@@ -61,7 +61,7 @@ def tile_features(
     for offset in offsets:
         new_centers = centers + offset
         diffs = np.abs(state[:, np.newaxis, :] - new_centers[np.newaxis, :, :])
-        inside_all_dims = np.abs(diffs) <= widths/2
+        inside_all_dims = np.abs(diffs) <= widths
         activations = np.all(inside_all_dims, axis=-1).astype(int)
         features += activations
     features /= len(offsets)
@@ -129,23 +129,26 @@ tile_multi = tile_features(state, centers, widths, offsets)
 coarse_one = coarse_features(state, centers, widths)
 coarse_multi = coarse_features(state, centers, widths, offsets)
 
-fig, axs = plt.subplots(1, 6)
+fig, axs = plt.subplots(2, 3)
 extent = [
     state_1_centers[0],
     state_1_centers[-1],
     state_2_centers[0],
     state_2_centers[-1],
 ]  # to change imshow axes
-axs[0].imshow(rbf[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
-axs[1].imshow(tile_one[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
-axs[2].imshow(tile_multi[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
-axs[3].imshow(coarse_one[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
-axs[4].imshow(coarse_multi[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
-axs[5].imshow(aggr[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
+axs[0][0].imshow(rbf[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
+axs[0][1].imshow(tile_one[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
+axs[0][2].imshow(tile_multi[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
+axs[1][0].imshow(coarse_one[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
+axs[1][1].imshow(coarse_multi[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
+axs[1][2].imshow(aggr[0].reshape(n_centers, n_centers), extent=extent, origin='lower')
 titles = ["RBFs", "Tile (1 Tiling)", "Tile (4 Tilings)", "Coarse (1 Field)", "Coarse (4 Fields)", "Aggreg."]  # we can't plot poly like this
-for ax, title in zip(axs, titles):
-    ax.plot(state[0][0], state[0][1], marker="+", markersize=12, color="red")
-    ax.set_title(title)
+for i in range(6):
+    axs[i//3][i%3].plot(state[0][0], state[0][1], marker="+", markersize=12, color="red")
+    axs[i//3][i%3].set_title(titles[i])
+# for ax, title in zip(axs, titles):
+#     ax.plot(state[0][0], state[0][1], marker="+", markersize=12, color="red")
+#     ax.set_title(title)
 plt.suptitle(f"State {state[0]}")
 plt.show()
 
